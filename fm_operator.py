@@ -2,10 +2,9 @@ import numpy as np
 import sounddevice as sd
 
 import math_func as mf
-from generator import Generator #, get_wave_y, get_integral_y
-from oscillators import SineOscillator, SquareOscillator
+from oscillators import Oscillator, SineOscillator, SquareOscillator
 
-class FMOperator(Generator):
+class FMOperator(Oscillator):
 	"""A class to represent an FM operator"""
 
 	def __init__(
@@ -29,16 +28,17 @@ class FMOperator(Generator):
 		"""Adds a modulator"""
 		self.modulators.append(mod)
 
-	def mod_y(self, t):
+	def mod_out(self, t):
 		"""Returns the sum ofthe values of all modulators at time t"""
 		if self.modulators == []:
 			return 0.0
 		else:
-			return np.sum(mod.wave_y(t) for mod in self.modulators)
+			return np.sum(mod.output(t) for mod in self.modulators)
 
 	def mod_int(self, t):
 		"""
-		Returns the integral of values given by self.mod_y(T) for T from 0 to t
+		Returns the integral of values given by self.mod_out(T) for T from 0 to 
+		t
 		This value is used to generate the modulated signal
 		"""
 
@@ -46,20 +46,23 @@ class FMOperator(Generator):
 			return 0.0
 		else:
 			if type(t) == np.ndarray:
-				return mf.integrate(self.mod_y(t), 1.0 / self.fs)
+				return mf.integrate(self.mod_out(t), 1.0 / self.fs)
 			else:
-				return (
-					(self.mod_y(t) + self.mod_y(t - (1.0 / self.fs))) 
-					/ 2*self.fs
-				)
+				if t == 0:
+					return 0.0
+				else:
+					return (
+						(self.mod_out(t) + self.mod_out(t - (1.0 / self.fs))) 
+						/ 2*self.fs + self.mod_int(t - (1.0 / self.fs))
+					)
 
-	def wave_y(self, t):
+	def output(self, t):
 		"""Returns the value of operators signal in time t"""
 		
 		mod = self.mod_int(t)
-		return self.generator.wave_y(t + mod)
+		return self.generator.output(t + mod)
 
-	def draw(self, ax, cycles=1, alpha=1.0):
+	def draw(self, ax, time=None, density=100, alpha=1.0, scale=1.0, cycles=1):
 		"""
 		Draws the shape of the operators output signal along with its 
 		modulators and modulators' modulators etc.
@@ -67,13 +70,16 @@ class FMOperator(Generator):
 		The shape will be drawn for 'cycles' cycles of operators carrier 
 		generator
 		"""
+		if time is None:
+			time = cycles / float(self.freq)
+			density = density*cycles
 
 		#draw the operators output signal
-		Generator.draw(self, ax, cycles, alpha)
+		Oscillator.draw(self, ax, time, density, alpha)
 
 		#draw modulators' output signals
 		for mod in self.modulators:
-			mod.draw(ax, mod.freq*cycles / self.freq, 0.5*alpha)
+			mod.draw(ax, time, density, 0.5*alpha)
 
 
 if __name__ == '__main__':
@@ -93,7 +99,7 @@ if __name__ == '__main__':
 
 	#"""
 	cycles = 4
-	op1.draw(plt, cycles*op1.freq / op2.freq)
+	op1.draw(plt, cycles=cycles)
 
 	ts = np.linspace(0, cycles / float(op2.freq), 100*cycles)
 	ys = op1.freq*op1.mod_int(ts)

@@ -3,7 +3,24 @@ import sounddevice as sd
 
 from generator import Generator
 
-class SineOscillator(Generator):
+class Oscillator(Generator):
+	"""A class to represent a basic oscillator"""
+
+	freq = 440.0 	#generators frequency
+
+	def output(self, t):
+		"""Returns the value of generators signal in time t"""
+		return np.sin(self.freq*2*np.pi*t)
+
+	def draw(self, ax, time=None, density=100, alpha=1.0, scale=1.0, cycles=1):
+		"""Draws the signals wave shape"""
+		if time is None:
+			time = cycles / float(self.freq)
+			density = density*cycles
+
+		Generator.draw(self, ax, time, density, alpha, scale)
+
+class SineOscillator(Oscillator):
 	"""A class to represent a sine wave oscillator"""
 
 	def __init__(self, freq=440.0, amp=1.0, phase=0.0):
@@ -13,11 +30,11 @@ class SineOscillator(Generator):
 		self.amp = amp
 		self.phase = phase
 
-	def wave_y(self, t):
+	def output(self, t):
 		"""Returns the value of oscillators signal in time t"""
 		return self.amp*np.sin(self.freq*2*np.pi*t + self.phase)
 
-class SquareOscillator(Generator):
+class SquareOscillator(Oscillator):
 	"""A class to represent a square wave oscillator"""
 
 	def __init__(self, freq=440.0, amp=1.0, phase=0.0):
@@ -27,7 +44,7 @@ class SquareOscillator(Generator):
 		self.amp = amp
 		self.phase = phase
 
-	def wave_y(self, t):
+	def output(self, t):
 		"""Returns the value of oscillators signal in time t"""
 		return self.amp*np.sign(np.sin(self.freq*2*np.pi*t + self.phase))
 
@@ -36,9 +53,8 @@ if __name__ == '__main__':
 	#the code below is just tests
 	import matplotlib.pyplot as plt
 
-	osc = SquareOscillator(440.0, 0.5)
+	osc = SineOscillator(440.0, 0.5)
 	
-	cycles = 3
-	osc.draw(plt, cycles)
+	osc.draw(plt, cycles=5, scale=20, density=5)
 	osc.play()
 	plt.show()
