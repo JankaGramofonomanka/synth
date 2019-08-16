@@ -3,13 +3,27 @@ from generators import Generator
 class Amplifier(Generator):
 	"""A class to represent an amplifier"""
 
-	def __init__(self, level=1.0, input=None):
+	def __init__(self, level=1.0, input=None, mod=None):
 		self.level = level
 		self.input = input
+		self.mod = mod
+
+	def set_input(self, input):
+		"""Adds an input to the amplifier"""
+		self.input = input
+
+	def set_mod(self, mod):
+		"""Adds a modulator to the amplifier"""
+		self.mod = mod
 
 	def output(self, t):
 		"""Returns the value of the output signal in time t"""
-		return self.level*self.input.output(t)
+		if self.mod is None:
+			mod_out = 1.0
+		else:
+			mod_out = self.mod.output(t)
+
+		return mod_out*self.level*self.input.output(t)
 
 	def draw(self, ax, time=1.0, density=100, alpha=1.0, scale=1.0):
 		"""
@@ -31,13 +45,11 @@ if __name__ == '__main__':
 	from mixer import Mixer
 	from oscillators import SineOscillator, SquareOscillator
 
-	mixer = Mixer()
+	osc = SineOscillator(440.0)
+	lfo = SineOscillator(0.5)
 
-	mixer.add_input(SineOscillator(440.0, 0.5))
-	mixer.add_input(SineOscillator(660.0, 0.5))
-
-	amp = Amplifier(2.0, mixer)
-	amp.play()
-	amp.draw(plt, 1.0 / 330.0)
+	amp = Amplifier(2.0, osc, lfo)
+	amp.play(2)
+	amp.draw(plt, 4.0 / 440.0)
 
 	plt.show()
