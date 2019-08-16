@@ -37,6 +37,23 @@ class SineOscillator(Oscillator):
 class SquareOscillator(Oscillator):
 	"""A class to represent a square wave oscillator"""
 
+	def __init__(self, freq=440.0, amp=1.0, phase=0.0, pw=0.5):
+		
+		#initialize essential parameters
+		self.freq = freq
+		self.amp = amp
+		self.phase = phase
+		self.pw = pw
+
+	def output(self, t):
+		"""Returns the value of oscillators signal in time t"""
+		current_phase = (self.freq*t + (self.phase / (2*np.pi))) % 1.0
+
+		return self.amp*(2*np.float64(current_phase < self.pw) - 1)
+
+class SawOscillator(Oscillator):
+	"""A class to represent a saw wave oscillator"""
+
 	def __init__(self, freq=440.0, amp=1.0, phase=0.0):
 		
 		#initialize essential parameters
@@ -46,15 +63,48 @@ class SquareOscillator(Oscillator):
 
 	def output(self, t):
 		"""Returns the value of oscillators signal in time t"""
-		return self.amp*np.sign(np.sin(self.freq*2*np.pi*t + self.phase))
+		return self.amp*(
+			-2*((self.freq*t + (self.phase / (2*np.pi))) % 1.0) + 1
+		)
+
+class RampOscillator(SawOscillator):
+	"""A class to represent a ramp wave oscillator"""
+
+	def output(self, t):
+		"""Returns the value of oscillators signal in time t"""
+		return -SawOscillator.output(self, t)
+
+class TriangleOscillator(Oscillator):
+	"""A class to represent a saw wave oscillator"""
+
+	def __init__(self, freq=440.0, amp=1.0, phase=0.0, pw=0.5):
+		
+		#initialize essential parameters
+		self.freq = freq
+		self.amp = amp
+		self.phase = phase
+		self.pw = pw
+
+	def output(self, t):
+		"""Returns the value of oscillators signal in time t"""
+		current_phase = (self.freq*t + (self.phase / (2*np.pi))) % 1.0
+		square = np.float64(current_phase < self.pw)
+
+		return self.amp*(
+			2*(
+				current_phase*square / self.pw + 
+				(1 - current_phase)*(1 - square) / (1 - self.pw)
+			) - 1
+		)
+
 
 if __name__ == '__main__':
 
 	#tests
 	import matplotlib.pyplot as plt
 
-	osc = SineOscillator(440.0, 0.5)
+	osc = SquareOscillator(440.0, pw=0.25)
 	
-	osc.draw(plt, cycles=5, scale=20, density=5)
+	osc.draw(plt, cycles=2)
 	osc.play()
-	plt.show()
+	plt.show() 
