@@ -1,4 +1,4 @@
-from generator import Generator
+from generators import Generator
 
 class Amplifier(Generator):
 	"""A class to represent an amplifier"""

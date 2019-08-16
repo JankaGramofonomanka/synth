@@ -1,7 +1,7 @@
 import numpy as np
 import sounddevice as sd
 
-from generator import Generator
+from generators import Generator
 
 class Oscillator(Generator):
 	"""A class to represent a basic oscillator"""
@@ -50,7 +50,7 @@ class SquareOscillator(Oscillator):
 
 if __name__ == '__main__':
 
-	#the code below is just tests
+	#tests
 	import matplotlib.pyplot as plt
 
 	osc = SineOscillator(440.0, 0.5)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from generator import Generator
+from generators import Generator
 
 class Mixer(Generator):
 	"""A class to represent a mixer"""

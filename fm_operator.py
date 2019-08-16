@@ -1,6 +1,7 @@
 import numpy as np
 import sounddevice as sd
 
+import constants as const
 import math_func as mf
 from oscillators import Oscillator, SineOscillator, SquareOscillator
 
@@ -46,14 +47,14 @@ class FMOperator(Oscillator):
 			return 0.0
 		else:
 			if type(t) == np.ndarray:
-				return mf.integrate(self.mod_out(t), 1.0 / self.fs)
+				return mf.integrate(self.mod_out(t), 1.0 / const.fs)
 			else:
 				if t == 0:
 					return 0.0
 				else:
 					return (
-						(self.mod_out(t) + self.mod_out(t - (1.0 / self.fs))) 
-						/ 2*self.fs + self.mod_int(t - (1.0 / self.fs))
+						(self.mod_out(t) + self.mod_out(t - (1.0 / const.fs))) 
+						/ 2*const.fs + self.mod_int(t - (1.0 / const.fs))
 					)
 
 	def output(self, t):
@@ -84,7 +85,7 @@ class FMOperator(Oscillator):
 
 if __name__ == '__main__':
 
-	#the code below is just tests
+	#tests
 	import matplotlib.pyplot as plt
 
 	op1 = FMOperator(440, 0.75)
