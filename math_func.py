@@ -4,9 +4,12 @@ def integrate(values, interval):
 	return (np.cumsum(values) - ((values[0] + values) / 2))*interval
 
 def line(A, B, x):
-	a = (A[1] - B[1]) / (A[0] - B[0])
-	b = A[1] - a*A[0]
-	return a*x + b
+	if A[0] == B[0]:
+		return (A[1] + B[1]) / 2
+	else:
+		a = (A[1] - B[1]) / (A[0] - B[0])
+		b = A[1] - a*A[0]
+		return a*x + b
 
 
 if __name__ == '__main__':

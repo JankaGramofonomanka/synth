@@ -6,7 +6,8 @@ from generators import Generator
 class Oscillator(Generator):
 	"""A class to represent a basic oscillator"""
 
-	freq = 440.0 	#generators frequency
+	def __init__(self):
+		freq = 440.0 	#generators frequency
 
 	def output(self, t):
 		"""Returns the value of generators signal in time t"""
@@ -68,7 +69,7 @@ class SawOscillator(Oscillator):
 		)
 
 class RampOscillator(SawOscillator):
-	"""A class to represent a ramp wave oscillator"""
+	"""A class to represent a ramp (inverse saw) wave oscillator"""
 
 	def output(self, t):
 		"""Returns the value of oscillators signal in time t"""
@@ -103,7 +104,7 @@ if __name__ == '__main__':
 	#tests
 	import matplotlib.pyplot as plt
 
-	osc = SquareOscillator(440.0, pw=0.25)
+	osc = TriangleOscillator(440.0, pw=0.25)
 	
 	osc.draw(plt, cycles=2)
 	osc.play()

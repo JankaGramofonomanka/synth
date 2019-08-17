@@ -4,7 +4,7 @@ import sounddevice as sd
 import constants as const
 
 class Generator():
-	"""A class to represent a sound generator of any kind"""
+	"""A class to represent a signal generator of any kind"""
 
 	def output(self, t):
 		"""Returns the value of generators signal in time t"""
@@ -38,7 +38,7 @@ class Const(Generator):
 			return self.value
 
 class Ramp(Generator):
-	"""A class to represent a"""
+	"""A class to represent a constantly increasing signal generator"""
 
 	def __init__(self, slope=1.0, start=0.0):
 		self.slope = np.float64(slope)
@@ -63,11 +63,16 @@ class Gate(Generator):
 			self.releases[-1] = const.inf
 
 	def output(self, t):
-		return np.sum(
-			np.float64(np.logical_and(
-				self.presses[i] <= t, t < self.releases[i]
-			)) for i in range(len(self.presses))
-		)
+		"""Returns the value of generators signal in time t"""
+		
+		if len(self.presses) == 0:
+			return np.full(t.shape, 0.0)
+		else:
+			return np.sum(
+				np.float64(np.logical_and(
+					self.presses[i] <= t, t < self.releases[i]
+				)) for i in range(len(self.presses))
+			)
 
 
 if __name__ == '__main__':
@@ -75,7 +80,7 @@ if __name__ == '__main__':
 	#tests
 	import matplotlib.pyplot as plt
 
-	gen = Gate([1,2,3])
+	gen = Gate([])
 	gen.draw(plt, 5)
 	gen.play()
 	plt.show()

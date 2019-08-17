@@ -134,6 +134,13 @@ class ADSR(Triggerable):
 		self.sustain = sustain
 		self.release = release
 
+	def set_params(self, attack, decay, sustain, release):
+
+		self.attack = attack
+		self.decay = decay
+		self.sustain = sustain
+		self.release = release
+
 	def before_release(self, t):
 		"""
 		Returns the output signal given that the gate is opened at time 0, and 
@@ -174,28 +181,19 @@ if __name__ == '__main__':
 	from amplifier import Amplifier
 
 
-	input = Gate([1,2,3,4])
-	#input = SquareOscillator(0.5)
-	eg = ADSR(0.5, 0.25, 0.75, 0.75, input=input)
-	#eg = Triggerable(input=input)
+	input = Gate([1,2,3,5,5.25, 8])
+	eg = ADSR(input=input)
+	time = 10.0
 
-	eg.draw(plt, 5.0, density=5*44100)
-	ts = np.linspace(0, 5.0, 5*44100)
-	plt.plot(ts, input.output(ts))
+	eg.draw(plt, time, density=5*44100)
 
-	presses = eg.get_presses(ts)
-	releases = eg.get_releases(ts)
+	eg.set_params(0.25, 0.25, 0.25, 0.25)
+	eg.draw(plt, time, density=5*44100)
 
-	ys = np.ones(presses.shape)
-	plt.scatter(presses, ys, label='key presses')
+	eg.set_params(0.5, 0.5, 0.75, 0.75)
+	eg.draw(plt, time, density=5*44100)
 
-	ys = np.zeros(releases.shape)
-	plt.scatter(releases, ys, label='key releases')
+	eg.set_params(0.75, 0.75, 0.75, 1.75)
+	eg.draw(plt, time, density=5*44100)
 
-	amp = Amplifier(1.0, SineOscillator(), eg)
-
-	amp.draw(plt, 5.0, density=5*const.fs)	
-	plt.legend()
-
-	amp.play(5.0)
 	plt.show()

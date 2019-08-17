@@ -5,8 +5,9 @@ from generators import Generator
 class Mixer(Generator):
 	"""A class to represent a mixer"""
 
-	inputs = []
-	levels = []
+	def __init__(self):
+		self.inputs = []
+		self.levels = []
 
 	def add_input(self, input, level=1.0):
 		"""Adds an input to the mixer"""
@@ -29,7 +30,10 @@ class Mixer(Generator):
 	def output(self, t):
 		"""Returns the sum of the values of all inputs at time t"""
 		if self.inputs == []:
-			return 0.0
+			if type(t) == np.ndarray:
+				return np.full(t.shape, 0.0)
+			else:
+				return 0.0
 		else:
 			return np.sum(
 				self.levels[i]*self.inputs[i].output(t) 
@@ -55,17 +59,16 @@ if __name__ == '__main__':
 	#tests
 	import matplotlib.pyplot as plt
 
-	from oscillators import SineOscillator, SquareOscillator
+	from oscillators import SineOscillator, SquareOscillator, SawOscillator
 
 	mixer = Mixer()
 
-	n = 11
-	for i in range(1, n):
-		mixer.add_input(SineOscillator(i*440.0))
+	mixer.add_input(SawOscillator(440.0))
+	mixer.add_input(SawOscillator(1.5*440.0))
 
-	for i in range(1, n):
-		mixer.set_level(i - 1, 1.0 / i)
+	mixer.set_level(0, 0.5)
+	mixer.set_level(1, 0.5)
 
-	mixer.draw(plt, 1.0 / 440.0, 400)
+	mixer.draw(plt, 4.0 / 440.0, 400)
 	mixer.play()
 	plt.show()
