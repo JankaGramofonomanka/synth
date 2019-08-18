@@ -6,7 +6,7 @@ import constants as const
 class Generator():
 	"""A class to represent a signal generator of any kind"""
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of generators signal in time t"""
 		if type(t) == np.ndarray:
 			return np.full(t.shape, 0.0)
@@ -21,7 +21,7 @@ class Generator():
 	def draw(self, ax, time=1.0, density=100, alpha=1.0, scale=1.0):
 		"""Draws the output signal"""
 		ts = np.linspace(0, time, density)
-		ys = scale*self.output(ts)
+		ys = scale*self.output(ts, ignore_mod=True)
 		ax.plot(ts, ys, alpha=alpha)
 
 class Const(Generator):
@@ -30,7 +30,7 @@ class Const(Generator):
 	def __init__(self, value=0.0):
 		self.value = np.float64(value)
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of generators signal in time t"""
 		if type(t) == np.ndarray:
 			return np.full(t.shape, self.value)
@@ -44,7 +44,7 @@ class Ramp(Generator):
 		self.slope = np.float64(slope)
 		self.start = np.float64(start)
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of generators signal in time t"""
 		return self.start + self.slope*t
 
@@ -62,9 +62,9 @@ class Gate(Generator):
 			self.releases[:-1] = np.array(ts[1::2])
 			self.releases[-1] = const.inf
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of generators signal in time t"""
-		
+
 		if len(self.presses) == 0:
 			return np.full(t.shape, 0.0)
 		else:
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 	#tests
 	import matplotlib.pyplot as plt
 
-	gen = Gate([])
+	gen = Gate([1, 2, 3, 4])
 	gen.draw(plt, 5)
 	gen.play()
 	plt.show()

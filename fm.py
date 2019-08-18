@@ -35,7 +35,7 @@ class LinearFMGenerator(Oscillator):
 		"""Adds a modulator"""
 		self.mod = mod
 
-	def mod_int(self, t):
+	def mod_int(self, t, **kwargs):
 		"""
 		Returns the integral of values given by self.mod_out(T) for T from 0 to 
 		t
@@ -46,20 +46,22 @@ class LinearFMGenerator(Oscillator):
 			return 0.0
 		else:
 			if type(t) == np.ndarray:
-				return mf.integrate(self.mod.output(t), 1.0 / const.fs)
+				return mf.integrate(self.mod.output(t, **kwargs), 1.0 / const.fs)
 			else:
 				if t == 0:
 					return 0.0
 				else:
-					return (
-						(self.mod.output(t) + self.mod.output(t - 1.0 / const.fs)) 
-						/ 2*const.fs + self.mod_int(t - (1.0 / const.fs))
+					return ((
+							self.mod.output(t, **kwargs) + 
+							self.mod.output(t - 1.0 / const.fs, **kwargs)
+						) / 2*const.fs + 
+						self.mod_int(t - (1.0 / const.fs), **kwargs)
 					)
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of operators signal in time t"""
 		
-		return self.carrier.output(t + self.mod_int(t))
+		return self.carrier.output(t + self.mod_int(t, **kwargs), **kwargs)
 
 class DXGenerator(LinearFMGenerator):
 	"""
@@ -67,10 +69,13 @@ class DXGenerator(LinearFMGenerator):
 	synthesizer series
 	"""
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of operators signal in time t"""
 		
-		return self.carrier.output(t + self.mod.output(t) / self.freq)
+		return self.carrier.output(
+			t + self.mod.output(t, **kwargs) / self.freq, 
+			**kwargs
+		)
 
 
 class FMOperator(Oscillator):
@@ -100,34 +105,39 @@ class FMOperator(Oscillator):
 		"""Adds a modulator"""
 		self.mixer.add_input(mod, level)
 
-	def set_eg_params(self, attack, decay, sustain, release):
+	def set_eg_params(self, *args, **kwargs):
 		"""Sets parameters of the envelope"""
-		self.eg.set_params(attack, decay, sustain, release)
+		self.eg.set_params(*args, **kwargs)
 
 	def set_gate(self, gate):
 		self.eg.set_input(gate)
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of operators signal in time t"""
-		return self.amp.output(t)
+		return self.amp.output(t, **kwargs)
 
-	def draw(self, ax, time=None, density=100, alpha=1.0, scale=1.0, cycles=1):
+	def draw(self, ax, time=None, cycles=1, **kwargs):
 		"""
 		Draws the shape of the operators output signal along with its 
 		modulators and modulators' modulators etc.
 		
-		The shape will be drawn for 'cycles' cycles of operators carrier 
-		generator
+		If 'time' is not provided, the shape will be drawn for 'cycles' cycles 
+		of operators carrier generator
 		"""
+
 		if time is None:
 			time = cycles / np.float64(self.freq)
-			density = density*cycles
 
 		#draw the operators output signal
-		Oscillator.draw(self, ax, time, density, alpha)
+		Oscillator.draw(self, ax, time, **kwargs)
 
 		#draw modulators' output signals
-		self.mixer.draw(ax, time, density, 0.5*alpha)
+		try:
+			kwargs['alpha'] *= 0.5
+		except KeyError:
+			kwargs['alpha'] = 0.5
+
+		self.mixer.draw(ax, time, **kwargs)
 
 
 if __name__ == '__main__':
@@ -137,7 +147,7 @@ if __name__ == '__main__':
 
 	from generators import Ramp, Const
 
-	freq = 110
+	freq = 440
 	op1 = FMOperator(freq, 0.75, fm_type='DX')
 	op2 = FMOperator(freq, 0.45, fm_type='DX')
 	op3 = FMOperator(freq, 0.45, fm_type='DX')
@@ -149,7 +159,7 @@ if __name__ == '__main__':
 	#op1.add_modulator(Const(0.5))
 
 
-	"""	
+	#"""	
 	gate = Gate([0, 1, 3, 6])
 	#gate.draw(plt, 8, density=500)
 
@@ -161,6 +171,7 @@ if __name__ == '__main__':
 	op2.set_eg_params(0.0675, 0.5, 0.5, 1.5)
 	op3.set_eg_params(0.0675, 0.0675, .125, 0.25)
 
+	"""
 	op1.eg.draw(plt, 8, density=500)
 	op2.eg.draw(plt, 8, density=500)
 	op3.eg.draw(plt, 8, density=500)
@@ -168,7 +179,7 @@ if __name__ == '__main__':
 	op1.draw(plt, 8, density=8*const.fs)
 	"""
 	
-	op1.draw(plt, cycles=2)
+	op1.draw(plt, density=const.fs / op1.freq)
 	
 	#"""
 
@@ -181,7 +192,7 @@ if __name__ == '__main__':
 	plt.plot(ts, ys, '--', label='op3 integral')
 	#"""
 
-	op1.play()
+	op1.play(8)
 
 	plt.legend()
 	plt.show() 

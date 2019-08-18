@@ -27,7 +27,7 @@ class Mixer(Generator):
 		"""Decreases the level corresponding to the i-th input"""
 		self.increase_level(i, -level)
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the sum of the values of all inputs at time t"""
 		if self.inputs == []:
 			if type(t) == np.ndarray:
@@ -36,23 +36,31 @@ class Mixer(Generator):
 				return 0.0
 		else:
 			return np.sum(
-				self.levels[i]*self.inputs[i].output(t) 
+				self.levels[i]*self.inputs[i].output(t, **kwargs) 
 				for i in range(len(self.inputs))
 			)
 
-	def draw(self, ax, time=1.0, density=100, alpha=1.0, scale=1.0):
+	def draw(self, ax, time=1.0, **kwargs):
 		"""
 		Draws the shape of the output signal along with its 
 		inputs
 		"""
 		#draw the output signal
-		Generator.draw(self, ax, time, density, alpha)
+		Generator.draw(self, ax, time, **kwargs)
 
 		#draw inputs' output signals
 		for i in range(len(self.inputs)):
-			self.inputs[i].draw(
-				ax, time, density, 0.5*alpha, self.levels[i]*scale
-			)
+			try:
+				kwargs['alpha'] *= 0.5
+			except KeyError:
+				kwargs['alpha'] = 0.5
+
+			try:
+				kwargs['scale'] *= self.levels[i]
+			except KeyError:
+				kwargs['scale'] = self.levels[i]
+			
+			self.inputs[i].draw(ax, time, **kwargs)
 
 if __name__ == '__main__':
 
@@ -69,6 +77,6 @@ if __name__ == '__main__':
 	mixer.set_level(0, 0.5)
 	mixer.set_level(1, 0.5)
 
-	mixer.draw(plt, 4.0 / 440.0, 400)
+	mixer.draw(plt, 4.0 / 440.0, density=400)
 	mixer.play()
 	plt.show()

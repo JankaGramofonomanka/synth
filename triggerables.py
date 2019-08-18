@@ -72,7 +72,7 @@ class Triggerable(Generator):
 		else:
 			return 0.0
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		
 		if type(t) == np.ndarray:
 			#return self.before_release(t) 

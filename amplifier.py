@@ -16,16 +16,19 @@ class Amplifier(Generator):
 		"""Adds a modulator to the amplifier"""
 		self.mod = mod
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of the output signal in time t"""
-		if self.mod is None:
+
+		if 'ignore_mod' in kwargs.keys() and kwargs['ignore_mod'] == True:
+			mod_out = 1.0
+		elif self.mod is None:
 			mod_out = 1.0
 		else:
-			mod_out = self.mod.output(t)
+			mod_out = self.mod.output(t, **kwargs)
 
-		return mod_out*self.level*self.input.output(t)
+		return mod_out*self.level*self.input.output(t, **kwargs)
 
-	def draw(self, ax, time=1.0, density=100, alpha=1.0, scale=1.0):
+	def draw(self, ax, time=1.0, **kwargs):
 		"""
 		Draws the shape of the output signal along with its 
 		input
@@ -33,8 +36,16 @@ class Amplifier(Generator):
 		The shape will be drawn for 'cycles' cycles of the input
 		"""
 
-		Generator.draw(self, ax, time, density, alpha, scale)
-		self.input.draw(ax, time, density, 0.5*alpha, scale)
+		#draw the amplifiers output
+		Generator.draw(self, ax, time, **kwargs)
+		
+		try:
+			kwargs['alpha'] *= 0.5
+		except KeyError:
+			kwargs['alpha'] = 0.5
+		
+		#draw the amplifiers input
+		self.input.draw(ax, time, **kwargs)
 
 
 if __name__ == '__main__':

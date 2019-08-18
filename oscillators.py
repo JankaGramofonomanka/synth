@@ -9,17 +9,22 @@ class Oscillator(Generator):
 	def __init__(self):
 		freq = 440.0 	#generators frequency
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of generators signal in time t"""
 		return np.sin(self.freq*2*np.pi*t)
 
-	def draw(self, ax, time=None, density=100, alpha=1.0, scale=1.0, cycles=1):
+	def draw(self, ax, time=None, cycles=1 ,**kwargs):
 		"""Draws the signals wave shape"""
-		if time is None:
-			time = cycles / float(self.freq)
-			density = density*cycles
 
-		Generator.draw(self, ax, time, density, alpha, scale)
+		if time is None:
+			time = cycles / np.float64(self.freq)
+
+			try:
+				kwargs['density'] *= cycles
+			except KeyError:
+				kwargs['density'] = 100*cycles
+
+		Generator.draw(self, ax, time, **kwargs)
 
 class SineOscillator(Oscillator):
 	"""A class to represent a sine wave oscillator"""
@@ -31,7 +36,7 @@ class SineOscillator(Oscillator):
 		self.amp = amp
 		self.phase = phase
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
 		return self.amp*np.sin(self.freq*2*np.pi*t + self.phase)
 
@@ -46,7 +51,7 @@ class SquareOscillator(Oscillator):
 		self.phase = phase
 		self.pw = pw
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
 		current_phase = (self.freq*t + (self.phase / (2*np.pi))) % 1.0
 
@@ -62,7 +67,7 @@ class SawOscillator(Oscillator):
 		self.amp = amp
 		self.phase = phase
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
 		return self.amp*(
 			-2*((self.freq*t + (self.phase / (2*np.pi))) % 1.0) + 1
@@ -71,9 +76,9 @@ class SawOscillator(Oscillator):
 class RampOscillator(SawOscillator):
 	"""A class to represent a ramp (inverse saw) wave oscillator"""
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
-		return -SawOscillator.output(self, t)
+		return -SawOscillator.output(self, t, **kwargs)
 
 class TriangleOscillator(Oscillator):
 	"""A class to represent a saw wave oscillator"""
@@ -86,7 +91,7 @@ class TriangleOscillator(Oscillator):
 		self.phase = phase
 		self.pw = pw
 
-	def output(self, t):
+	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
 		current_phase = (self.freq*t + (self.phase / (2*np.pi))) % 1.0
 		square = np.float64(current_phase < self.pw)
@@ -104,8 +109,10 @@ if __name__ == '__main__':
 	#tests
 	import matplotlib.pyplot as plt
 
-	osc = TriangleOscillator(440.0, pw=0.25)
+	import constants as const
+
+	osc = SineOscillator(440.0)
 	
-	osc.draw(plt, cycles=2)
+	osc.draw(plt, density=100, alpha=0.2, scale=40)
 	osc.play()
 	plt.show() 
