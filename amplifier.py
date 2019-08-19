@@ -16,17 +16,17 @@ class Amplifier(Generator):
 		"""Adds a modulator to the amplifier"""
 		self.mod = mod
 
-	def output(self, t, **kwargs):
+	def output(self, t, ignore_mod=False, **kwargs):
 		"""Returns the value of the output signal in time t"""
 
-		if 'ignore_mod' in kwargs.keys() and kwargs['ignore_mod'] == True:
-			mod_out = 1.0
-		elif self.mod is None:
+		if ignore_mod or self.mod is None:
 			mod_out = 1.0
 		else:
 			mod_out = self.mod.output(t, **kwargs)
 
-		return mod_out*self.level*self.input.output(t, **kwargs)
+		return mod_out*self.level*self.input.output(
+			t, ignore_mod=ignore_mod, **kwargs
+		)
 
 	def draw(self, ax, time=1.0, **kwargs):
 		"""
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 	osc = SineOscillator(440.0)
 	lfo = SineOscillator(0.5)
-
+	
 	amp = Amplifier(2.0, osc, lfo)
 	amp.play(2)
 	amp.draw(plt, 4.0 / 440.0)

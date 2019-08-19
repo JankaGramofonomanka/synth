@@ -15,9 +15,11 @@ class LinearFMGenerator(Oscillator):
 
 	def __init__(
 		self, freq=440.0, level=1.0, phase=0.0, feedback=0, type='sine', 
-		mod=None
+		mod=None, key_in=None
 	):
 		#initialize essential parameters
+		Oscillator.__init__(self, key_in)
+
 		self.freq = freq
 		self.level = level
 		self.phase = phase
@@ -26,14 +28,18 @@ class LinearFMGenerator(Oscillator):
 
 		#initialize operators carrier generator
 		if type == 'sine':
-			self.carrier = SineOscillator(freq, level, phase)
+			self.carrier = SineOscillator(freq, level, phase, key_in)
 		elif type == 'square':
-			self.carrier = SquareOscillator(freq, level, phase)
+			self.carrier = SquareOscillator(freq, level, phase, key_in)
 		#there will be other types in the future
 
 	def set_modulator(self, mod):
 		"""Adds a modulator"""
 		self.mod = mod
+
+	def set_key_in(self, key_in):
+		self.key_in = key_in
+		self.carrier.set_key_in(key_in)
 
 	def mod_int(self, t, **kwargs):
 		"""
@@ -83,19 +89,21 @@ class FMOperator(Oscillator):
 
 	def __init__(
 		self, freq=440.0, level=1.0, phase=0.0, feedback=0, wave_type='sine', 
-		fm_type='LinearFM', gate=Gate([0.0])
+		fm_type='LinearFM', gate=Gate([0.0]), key_in=None
 	):
+		Oscillator.__init__(self, key_in)
+
 		self.freq = freq
 
 		self.mixer = Mixer()
 
 		if fm_type == 'LinearFM':			
 			self.generator = LinearFMGenerator(
-				freq, level, phase, feedback, wave_type, self.mixer
+				freq, level, phase, feedback, wave_type, self.mixer, key_in
 			)
 		elif fm_type == 'DX':
 			self.generator = DXGenerator(
-				freq, level, phase, feedback, wave_type, self.mixer
+				freq, level, phase, feedback, wave_type, self.mixer, key_in
 			)
 
 		self.eg = ADSR(input=gate)
@@ -105,12 +113,22 @@ class FMOperator(Oscillator):
 		"""Adds a modulator"""
 		self.mixer.add_input(mod, level)
 
+	def set_key_in(self, key_in):
+		"""Sets key input"""
+		self.key_in = key_in
+		self.generator.set_key_in(key_in)
+
 	def set_eg_params(self, *args, **kwargs):
 		"""Sets parameters of the envelope"""
 		self.eg.set_params(*args, **kwargs)
 
 	def set_gate(self, gate):
 		self.eg.set_input(gate)
+
+	def set_keyboard(self, keyboard):
+		"""sets key and gate input from a keybord"""
+		self.set_key_in(keyboard.key)
+		self.set_gate(keyboard.gate)
 
 	def output(self, t, **kwargs):
 		"""Returns the value of operators signal in time t"""
@@ -125,13 +143,14 @@ class FMOperator(Oscillator):
 		of operators carrier generator
 		"""
 
+		#draw the operators output signal
+		Oscillator.draw(self, ax, time, cycles, **kwargs)
+
+		#draw modulators' output signals
+
 		if time is None:
 			time = cycles / np.float64(self.freq)
 
-		#draw the operators output signal
-		Oscillator.draw(self, ax, time, **kwargs)
-
-		#draw modulators' output signals
 		try:
 			kwargs['alpha'] *= 0.5
 		except KeyError:
@@ -146,6 +165,7 @@ if __name__ == '__main__':
 	import matplotlib.pyplot as plt
 
 	from generators import Ramp, Const
+	from keyboard import MonoKey, MonoKeyboard
 
 	freq = 440
 	op1 = FMOperator(freq, 0.75, fm_type='DX')
@@ -160,12 +180,13 @@ if __name__ == '__main__':
 
 
 	#"""	
-	gate = Gate([0, 1, 3, 6])
+	gate = Gate([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5])
+	keyboard = MonoKeyboard(gate=gate, steps=[1,2,3,4], pitches=[12,4,7,0])
 	#gate.draw(plt, 8, density=500)
 
-	op1.set_gate(gate)
-	op2.set_gate(gate)
-	op3.set_gate(gate)
+	op1.set_keyboard(keyboard)
+	op2.set_keyboard(keyboard)
+	op3.set_keyboard(keyboard)
 	
 	op1.set_eg_params(0.0, 0.5, .5, 1.5)
 	op2.set_eg_params(0.0675, 0.5, 0.5, 1.5)
@@ -179,7 +200,7 @@ if __name__ == '__main__':
 	op1.draw(plt, 8, density=8*const.fs)
 	"""
 	
-	op1.draw(plt, density=const.fs / op1.freq)
+	op1.draw(plt, cycles=2)
 	
 	#"""
 
@@ -192,7 +213,6 @@ if __name__ == '__main__':
 	plt.plot(ts, ys, '--', label='op3 integral')
 	#"""
 
-	op1.play(8)
+	op1.play(6)
 
-	plt.legend()
 	plt.show() 
