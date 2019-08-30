@@ -1,4 +1,5 @@
 import numpy as np
+import mido
 
 import constants as const
 
@@ -50,16 +51,85 @@ class MonoKeyboard():
 	def gate_out(self, t, **kwargs):
 		return self.gate.output(t, **kwargs)
 
+	def read_midi(self, filename, track=0):
+
+		tempo = 500000
+
+		mid = mido.MidiFile(filename)
+
+		ts = []
+		steps = []
+		pitches = []
+
+		pressed = []
+		time = 0.0
+
+		for msg in mid.tracks[0]:
+
+			time += mido.tick2second(msg.time, mid.ticks_per_beat, tempo)
+
+			if msg.type == 'set_tempo':
+				tempo = msg.tempo
+				continue
+
+			elif msg.type != 'note_on':
+				continue
+
+			if msg.velocity > 0:
+				if pressed == []:
+					ts.append(time)
+
+				if msg.note not in pressed:
+					
+					pressed.append(msg.note)
+					
+					steps.append(time)
+					pitches.append(msg.note - 69)
+			else:
+				if msg.note in pressed:
+					
+					pressed.remove(msg.note)
+
+					if pressed == []:
+						ts.append(time)
+					else:
+						steps.append(time)
+						pitches.append(msg.note - 69)
+
+
+		self.gate = Gate(ts)
+		self.key = MonoKey(steps, pitches)
+
 
 if __name__ == '__main__':
 
 	#tests
 	import matplotlib.pyplot as plt
 
-	gate = Gate([1, 2.5, 3, 3.2, 4, 4.05, 4.3, 5, 6, 7., 9])
-	kbd = MonoKeyboard(gate, [4, 5, 2, -3, 0, 1, 3, -2], [1, 3, 4, 4.3, 4.7, 6, 6.5])
+	from fm import FMOperator
 
-	kbd.gate.draw(plt, 10, density=800)
-	kbd.key.draw(plt, 10, density=800)
+	kbd = MonoKeyboard()
+	kbd.read_midi('wlazkoteknaplotek.mid')
+
+	kbd.gate.draw(plt, 20, density=2000)
+	kbd.key.draw(plt, 20, density=2000)
+
+	freq = 440
+	op1 = FMOperator(freq, 0.75, fm_type='DX')
+	op2 = FMOperator(freq, 0.75, fm_type='DX')
+	op3 = FMOperator(freq, 0.45, fm_type='DX')
+	
+	#op2.add_modulator(op3)
+	op1.add_modulator(op2)
+	
+	op1.set_eg_params(0.01, 0.5, .5, 1.5)
+	op2.set_eg_params(0.0675, 0.5, 0.5, 1.5)
+	op3.set_eg_params(0.0675, 0.0675, .125, 0.25)
+
+	op1.set_keyboard(kbd)
+	op2.set_keyboard(kbd)
+	op3.set_keyboard(kbd)
+
+	op1.play(20)
 
 	plt.show()
