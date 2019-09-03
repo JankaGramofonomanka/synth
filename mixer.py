@@ -6,8 +6,8 @@ class Mixer(Generator):
 	"""A class to represent a mixer"""
 
 	def __init__(self):
-		self.inputs = []
-		self.levels = []
+		self.inputs = []	#list of inputs
+		self.levels = []	#list of loudness levels
 
 	def add_input(self, input, level=1.0):
 		"""Adds an input to the mixer"""

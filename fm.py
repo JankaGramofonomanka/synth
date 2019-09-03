@@ -14,17 +14,17 @@ class LinearFMGenerator(Oscillator):
 	"""A class to represent a sound generator with Linear FM"""
 
 	def __init__(
-		self, freq=440.0, level=1.0, phase=0.0, feedback=0, type='sine', 
-		mod=None, key_in=None
+		self, freq=440.0, level=1.0, phase=0.0, type='sine', mod=None, 
+		key_in=None
 	):
 		#initialize essential parameters
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
-		self.level = level
-		self.phase = phase
-		self.mod = mod
-		self.feedback = feedback
+		self.freq = freq			#frequency
+		self.level = level			#amplitude
+		self.phase = phase			#phase
+		
+		self.mod = mod				#modulator
 
 		#initialize operators carrier generator
 		if type == 'sine':
@@ -89,24 +89,27 @@ class FMOperator(Oscillator):
 
 	def __init__(
 		self, freq=440.0, level=1.0, phase=0.0, feedback=0, wave_type='sine', 
-		fm_type='LinearFM', gate=Gate([0.0]), key_in=None
+		fm_type='DX', gate=Gate([0.0]), key_in=None
 	):
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
+		self.freq = freq				#frequency
 
-		self.mixer = Mixer()
+		self.mixer = Mixer()			#mixer to add modulators' outputs
 
+		#sound generator
 		if fm_type == 'LinearFM':			
 			self.generator = LinearFMGenerator(
-				freq, level, phase, feedback, wave_type, self.mixer, key_in
+				freq, level, phase, wave_type, self.mixer, key_in
 			)
 		elif fm_type == 'DX':
 			self.generator = DXGenerator(
-				freq, level, phase, feedback, wave_type, self.mixer, key_in
+				freq, level, phase, wave_type, self.mixer, key_in
 			)
 
-		self.eg = ADSR(input=gate)
+		self.eg = ADSR(input=gate)		#envelope generator
+
+		#amplifier
 		self.amp = Amplifier(input=self.generator, mod=self.eg)
 
 	def add_modulator(self, mod, level=1.0):
@@ -123,6 +126,7 @@ class FMOperator(Oscillator):
 		self.eg.set_params(*args, **kwargs)
 
 	def set_gate(self, gate):
+		"""Sets the gate input"""
 		self.eg.set_input(gate)
 
 	def set_keyboard(self, keyboard):

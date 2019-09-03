@@ -4,9 +4,9 @@ class Amplifier(Generator):
 	"""A class to represent an amplifier"""
 
 	def __init__(self, level=1.0, input=None, mod=None):
-		self.level = level
-		self.input = input
-		self.mod = mod
+		self.level = level		#loudness level
+		self.input = input		#amplified input
+		self.mod = mod			#modulator
 
 	def set_input(self, input):
 		"""Adds an input to the amplifier"""

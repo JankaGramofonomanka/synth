@@ -33,6 +33,7 @@ class Oscillator(Generator):
 	def draw(self, ax, time=None, cycles=1 ,**kwargs):
 		"""Draws the signals wave shape"""
 
+		#if time is not provided draw the wave shape 'cycles' times
 		if time is None:
 			time = cycles / np.float64(self.freq)
 
@@ -51,9 +52,9 @@ class SineOscillator(Oscillator):
 		#initialize essential parameters
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
-		self.amp = amp
-		self.phase = phase
+		self.freq = freq		#frequency
+		self.amp = amp			#amplitude
+		self.phase = phase		#phase
 
 	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
@@ -69,10 +70,10 @@ class SquareOscillator(Oscillator):
 		#initialize essential parameters
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
-		self.amp = amp
-		self.phase = phase
-		self.pw = pw
+		self.freq = freq		#frequency
+		self.amp = amp			#amplitude
+		self.phase = phase		#phase
+		self.pw = pw			#pulse width
 
 	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
@@ -90,9 +91,9 @@ class SawOscillator(Oscillator):
 		#initialize essential parameters
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
-		self.amp = amp
-		self.phase = phase
+		self.freq = freq		#frequency
+		self.amp = amp			#amplitude
+		self.phase = phase		#phase
 
 	def output(self, t, **kwargs):
 		"""Returns the value of oscillators signal in time t"""
@@ -117,9 +118,14 @@ class TriangleOscillator(Oscillator):
 		#initialize essential parameters
 		Oscillator.__init__(self, key_in)
 
-		self.freq = freq
-		self.amp = amp
-		self.phase = phase
+		self.freq = freq		#frequency
+		self.amp = amp			#amplitude
+		self.phase = phase		#phase
+		
+		"""
+		'pw' here means in what phase of the wave's cycle the signal stops 
+		ascending and starts descending (0 - at the beginning, 1 - at the end)
+		"""
 		self.pw = pw
 
 	def output(self, t, **kwargs):

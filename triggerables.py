@@ -9,7 +9,9 @@ class Triggerable(Generator):
 
 	def __init__(self, input=Gate(), threshold=0.5):
 
-		self.input = input
+		self.input = input				#gate input
+
+		#gate input has to be higher than 'threshold' to trigger the module
 		self.threshold = threshold
 
 	def set_input(self, input):
@@ -75,40 +77,53 @@ class Triggerable(Generator):
 	def output(self, t, **kwargs):
 		
 		if type(t) == np.ndarray:
-			#return self.before_release(t) 
+			
+			#moments where the module is triggered
 			presses = self.get_presses(t)
-			releases = self.get_releases(t)
-			n = presses.shape[0]
 
+			#moments where the module is stopped
+			releases = self.get_releases(t)
+
+			if len(presses) == 0:
+				return np.full(t.shape, 0.0)
+
+			#the output will be stored here
 			output = np.zeros(t.shape)
 
-			i = 0
-			press = presses[i]
+			i = 0					#iterator
+			press = presses[i]		#the next (here first) press/trigger moment
+
 			while True:
 				
+				#let 'release' be the next release/stop moment
 				try:
 					release = releases[i]
 				except IndexError:
 					release = const.inf
 				
+				#trigger the module
 				output += (
 					self.before_release(t - press)
 					*np.float64(np.logical_and(press <= t, t < release))
 				)
 
+				#the previous press/trigger moment
 				prev_press = press
 				
+				#let 'press' be the next press/trigger moment
 				try:
 					press = presses[i + 1]
 				except IndexError:
 					press = const.inf
 
+				#stop the module
 				output += (
 					self.before_release(release - prev_press)
 					*self.after_release(t - release)
 					*np.float64(np.logical_and(release <= t, t < press))
 				)
 
+				#stop when there is no more presses/triggers
 				if press >= const.inf:
 					break
 
@@ -129,17 +144,14 @@ class ADSR(Triggerable):
 	):
 		Triggerable.__init__(self, input, threshold)
 
-		self.attack = attack
-		self.decay = decay
-		self.sustain = sustain
-		self.release = release
+		self.set_params(attack, decay, sustain, release)
 
 	def set_params(self, attack, decay, sustain, release):
 
-		self.attack = attack
-		self.decay = decay
-		self.sustain = sustain
-		self.release = release
+		self.attack = attack		#attack length
+		self.decay = decay			#decay length
+		self.sustain = sustain		#sustain height
+		self.release = release		#release length
 
 	def before_release(self, t):
 		"""
